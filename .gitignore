@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build output (load the unpacked extension from dist/)
+dist/
+*.tsbuildinfo
+
+# Packaged extension files
+*.zip
+*.crx
+# Private signing key: never commit
+*.pem
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment
+.env
+.env.*
+
+# Editors / OS
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db

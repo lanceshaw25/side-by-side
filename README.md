@@ -1,186 +1,191 @@
-# Bilingual Scripture and General Conference Reading Assistant
+# Side-by-Side: Bilingual General Conference Reader
 
 ## Overview
 
-A personal Chrome extension to make reading bilingual content on the Church of Jesus Christ of Latter-day Saints website easier.
+A personal Chrome extension for reading English and Portuguese versions of General Conference talks side by side on the Church of Jesus Christ of Latter-day Saints website.
 
-The initial focus is on reading General Conference talks in English and Portuguese side by side. The extension will complement the existing **Dual Page Sync** Chrome extension by highlighting the paragraph currently being read in both language versions.
+The two language versions stay in two ordinary Chrome tabs, so the website's existing features (annotations, highlights, study notes) keep working. The extension:
 
-Rather than building a new scrolling synchronization system, this project aims to use Dual Page Sync for scrolling and add a synchronized reading-position indicator using the website's existing `active-item` CSS class.
+* Detects the paragraph currently being read.
+* Finds the corresponding paragraph in the other language using the shared HTML element ID.
+* Scrolls the other tab so that paragraph lines up.
+* Marks the current paragraph in both tabs.
 
-## Goals
+This is also a learning project for practicing TypeScript, DOM inspection, browser APIs, and Chrome extension development.
 
-* Read English and Portuguese versions of the same General Conference talk side by side.
-* Use Dual Page Sync to keep the two pages approximately synchronized while scrolling.
-* Highlight the current paragraph in both languages with the website's existing blue-line indicator.
-* Match corresponding paragraphs using their shared HTML element IDs.
-* Preserve the website's existing annotations, study notes, highlights, and other functionality.
-* Keep the implementation small and understandable as a learning project.
+## Scope
 
-## Initial Scope
+### Version 1: General Conference Talks
 
-### Version 1
+* English and Portuguese versions of the same talk.
+* Scroll synchronization in either direction, based on matching paragraph IDs.
+* A reading-position marker on the current paragraph in both tabs.
+* Only the two tabs showing the same talk are synchronized. Unrelated tabs are left alone.
+* The site's annotations, highlights, and study-note behavior are preserved.
 
-* Chrome extension using Manifest V3.
-* General Conference talks on the Church website.
-* English and Portuguese language versions.
-* Detect the paragraph currently being read.
-* Find the corresponding paragraph in the other language.
-* Apply `active-item` to the corresponding paragraphs.
-* Remove previous extension-managed markers as the reading position changes.
-* Work alongside Dual Page Sync without taking over scroll synchronization.
+### Later
 
-### Out of Scope for Version 1
+* Scripture pages, using verse IDs such as `p12`.
+* Additional languages available on the Church website.
+* A popup for enabling or disabling synchronization.
 
-* Synchronizing study notes or annotations between languages.
-* Supporting translations hosted on unrelated websites.
-* Implementing a replacement for Dual Page Sync.
-* Synchronizing arbitrary page navigation.
-* Supporting every scripture page and language combination before the initial approach is validated.
+### Out of Scope
 
-Scripture pages may be added later, since they also use the `active-item` class.
+* Synchronizing study notes, annotations, or asides between languages.
+* Translations hosted on other websites (ESV, NIV, KJV, etc.).
+* Recreating the website's annotation or study-note functionality.
+* A standalone scripture or conference reader.
 
-## Discoveries and Experiments
+### Why Not Dual Page Sync?
+
+The existing Dual Page Sync extension was tested. Its default mode syncs by page-height percentage, which drifts because translated paragraphs have different heights. Its element-based mode doesn't know about the shared paragraph IDs. Once the extension can identify the current paragraph (which it needs for the marker anyway), scrolling the other tab to the matching paragraph is a small step. Doing it in one extension avoids two extensions competing over scroll events.
+
+## Discoveries So Far
 
 ### 1. Corresponding paragraphs share IDs
 
-On General Conference pages, corresponding English and Portuguese paragraphs have been observed to use the same HTML element IDs, even when their translated text and `data-aid` values differ.
-
-For example, a paragraph may have an ID such as:
+English and Portuguese paragraphs in the same talk have the same `id` but different `data-aid` values:
 
 ```html
-<p id="p_d5rju" data-aid="173867460">
+<!-- Portuguese -->
+<p data-aid="173909859" id="p_d5rju">...</p>
+
+<!-- English -->
+<p data-aid="173867460" id="p_d5rju">...</p>
 ```
 
-The corresponding paragraph in the other language may use the same `id` but a different `data-aid`.
+The element ID is the cross-language anchor. The meaning of `data-aid` is unconfirmed, and the extension does not depend on it.
 
-This suggests that the element ID can be used to find the corresponding paragraph across language versions. This behavior should be validated across additional talks and page reloads.
+### 2. Paragraph heights differ
 
-### 2. The `active-item` class produces the blue-line marker
+The example paragraph is about 432px high in English and 490px in Portuguese. Raw scroll positions or pixel offsets can't be matched. The extension has to match paragraph elements.
 
-Scripture verse elements normally use a class such as `verse`. A selected verse may use `verse active-item`.
+### 3. The `active-item` class produces the blue-line marker
 
-For example:
-
-```html
-<p class="verse active-item" id="p3">
-```
-
-In Chrome DevTools, adding the class manually makes the blue-line indicator appear:
-
-```javascript
-document.getElementById("p3").classList.add("active-item");
-```
-
-The same experiment worked on a General Conference paragraph that did not originally have a class:
+Adding `active-item` shows the site's blue-line indicator on scripture verses and on conference paragraphs, in both language tabs:
 
 ```javascript
 document.getElementById("p_atr5w").classList.add("active-item");
 ```
 
-The class was also successfully applied to the same paragraph ID in both language panes, producing the marker in both places.
+**Open question:** How the website manages this class internally. The site is a React app and may re-render or remove the class. If it does, the extension will use its own class (e.g. `sbs-current`) styled to look the same.
 
-**Confirmed:** The `active-item` class can be used to display the marker on both scripture verses and General Conference paragraphs.
+### 4. Study notes open in an aside
 
-**Still to investigate:** How the Church website manages this class internally, and how to avoid conflicting with its own state.
+Study-note links open an aside on the current page. This works with the two-tab arrangement and does not need to sync.
 
-### 3. Scripture URL parameters
+### 5. URLs are predictable
 
-Scripture URLs can include a selected verse range, for example:
+* Pathname identifies the talk, or the book and chapter for scriptures.
+* `lang=eng` and `lang=por` select the language.
+* For scriptures, `id=p12-p17` selects a verse range and `#p12` navigates to a verse.
 
-```text
-?lang=eng&id=p3-p12#p3
-```
+Changing only `lang` loads the same content in the other language. This is what makes automatic tab pairing possible.
 
-The `id` parameter appears to identify a selected range of verses, and the website applies its active state accordingly.
+## Design
 
-For the initial General Conference implementation, the extension will not depend on URL-selected ranges. It will manage its own reading-position markers.
+### Reading position
 
-### 4. Dual Page Sync
+A "reading line" sits about 30% down the viewport. The paragraph crossing that line is the current paragraph. An `IntersectionObserver` with a thin band (for example `rootMargin: "-30% 0px -69% 0px"`) detects it without running code on every scroll event.
 
-Dual Page Sync has been tested with two pages displayed side by side. Its scroll synchronization appears reasonably close for bilingual reading, although alignment can drift because translated paragraphs have different heights.
+### Tab pairing
 
-The extension provides two scroll modes:
+The background service worker pairs two tabs automatically when their pathnames match and their `lang` values differ. No pairing UI is needed, and unrelated conference tabs are ignored.
 
-* Default mode, based on page-height percentages.
-* Element-based mode.
+### Scroll synchronization
 
-URL synchronization can be disabled so that the English and Portuguese pages remain independent.
+1. The content script in the active tab reports the current paragraph ID and how far through it the reading line is (e.g. `0.4` = 40%).
+2. The background worker relays the message to the paired tab:
+   content script → `chrome.runtime.sendMessage` → worker → `chrome.tabs.sendMessage` → paired content script.
+3. The paired tab scrolls so the same fraction of its matching paragraph sits on its reading line. Proportional alignment handles the height differences and keeps the movement smooth instead of jumping paragraph by paragraph.
 
-The initial project will leave scrolling to Dual Page Sync and focus on highlighting the corresponding paragraphs.
+### Avoiding feedback loops
 
-## Proposed Design
+Only the tab the user is actually interacting with sends updates. Each content script tracks the last `wheel`, `keydown`, or `touchstart` event. Programmatic scrolling doesn't fire these events, so a synced scroll never echoes back.
 
-1. Detect the paragraph currently being read in one pane.
-2. Obtain its element ID.
-3. Find the corresponding paragraph in the other pane using that ID.
-4. Apply `active-item` to both paragraphs.
-5. Remove the extension's previous markers when the reading position changes.
-6. Handle missing IDs, page navigation, and paragraphs that have no counterpart.
+### Marker
 
-The marker should follow the reading position; it should not control scrolling. This keeps highlighting independent of Dual Page Sync.
+The current paragraph is marked in both tabs. The extension tracks the elements it has marked, so cleanup never removes the website's own state.
 
-An `IntersectionObserver` is a candidate for detecting the current paragraph. A small console experiment should establish a reliable reading-position rule before the extension is implemented.
+### Single-page navigation
+
+The site changes pages without full reloads. The content script watches for URL changes, re-scans paragraphs, and lets the worker re-pair tabs.
 
 ## Technical Approach
 
 * **Browser:** Google Chrome
 * **Extension:** Manifest V3
-* **Language:** JavaScript or TypeScript
-* **Integration:** Content scripts running on the Church website
-* **Scrolling:** Existing Dual Page Sync extension
-* **Paragraph matching:** Shared HTML element IDs
-* **Visual indicator:** Existing `active-item` class
+* **Language:** TypeScript
+* **Build:** `esbuild` bundles each entry point (content script, service worker) into `dist/`. `tsc --noEmit` does type checking.
+* **Types:** `@types/chrome`
+* **Content scripts:** restricted to `https://www.churchofjesuschrist.org/study/*`
+* **Paragraph matching:** shared HTML element IDs
 
-No backend service should be necessary for the initial version.
+No backend, framework, or React application is needed.
+
+Why a bundler: Manifest V3 content scripts can't use ES module `import`s. `esbuild` lets the content script and worker share TypeScript types (such as message shapes) and still output single plain-JS files. It's one dev dependency and one build command.
 
 ## Development Plan
 
+Each phase should produce a working, testable result before moving on.
+
 ### Phase 1: Validate the DOM
 
-* Test paragraph ID matching across several talks and both languages.
-* Confirm that IDs remain consistent after reloading pages.
-* Investigate how the website applies and removes `active-item`.
-* Determine how to distinguish the current reading paragraph from nearby paragraphs.
+* Confirm that paragraph IDs match across several talks and both languages.
+* Confirm that the IDs stay the same after reloading the page.
+* Check which elements carry IDs: body paragraphs, headings, quotes, footnote markers.
+* Observe whether the site adds or removes `active-item` on conference pages.
 
-### Phase 2: Build a Console Proof of Concept
+### Phase 2: Console proof of concept (one tab)
 
-* Detect the paragraph currently being read.
-* Log its ID while scrolling.
-* Find the matching paragraph in the other language.
-* Apply the marker to both paragraphs.
-* Remove previous markers safely.
+* Detect the current paragraph with an `IntersectionObserver` reading line.
+* Log its ID and the fraction read while scrolling.
+* Mark it, and clear the previous marker.
 
-### Phase 3: Build the Chrome Extension
+### Phase 3: Extension skeleton
 
-* Create the Manifest V3 configuration.
-* Add content scripts for supported Church website pages.
-* Implement reading-position detection and matching.
-* Track extension-managed markers so cleanup does not remove unrelated website state.
+* Set up `package.json`, `tsconfig.json`, the esbuild script, and `manifest.json`.
+* Move the Phase 2 logic into a content script.
+* Load the unpacked extension from `dist/` and confirm the marker works.
 
-### Phase 4: Test with Dual Page Sync
+### Phase 4: Pairing and messaging
 
-* Test English and Portuguese versions of the same talk.
-* Try both scroll modes.
-* Verify that highlighting follows the reader in either pane.
-* Test different paragraph heights and long talks.
-* Test navigation, page reloads, missing counterpart paragraphs, and existing annotations.
+* Pair tabs in the service worker by pathname and differing `lang`.
+* Relay messages between paired tabs, and log them on the receiving side.
+* Handle a closed tab, a tab that navigates away, and a page reload.
 
-### Phase 5: Consider Future Enhancements
+### Phase 5: Scroll synchronization
 
-* Support scripture pages using verse IDs.
-* Support additional languages.
-* Improve reading-position detection.
-* Add configuration options if needed.
+* Apply proportional alignment in the paired tab.
+* Add input-based leader detection to prevent feedback loops.
+* Test scrolling in both directions.
+
+### Phase 6: Test and refine
+
+* Long and short paragraphs with different heights.
+* Paragraphs with no counterpart.
+* Study-note asides open in one tab.
+* Back/forward and in-site navigation.
+* Multiple conference talks open at once.
+* Performance during continuous scrolling.
+* Existing annotations and highlights still work.
+
+### Phase 7: Future enhancements
+
+* Scripture pages using verse IDs.
+* Additional languages.
+* An enable/disable popup.
 
 ## Learning Approach
 
-This project is intended to be developed incrementally as a learning exercise.
+Build incrementally rather than having AI generate the entire extension.
 
-The preferred workflow is to investigate each behavior, attempt a small implementation, and use AI assistance for hints, explanations, and code review rather than generating the entire extension at once.
-
-Each phase should produce a working, testable result before moving on.
+1. Spend 10–15 minutes attempting each task independently.
+2. Ask AI for hints rather than a complete solution.
+3. Implement the code.
+4. Request a code review.
+5. Compare the implementation with an alternative solution.
 
 ## Success Criteria
 
-The first version will be successful if a reader can open matching English and Portuguese General Conference talks side by side, scroll using Dual Page Sync, and see a blue-line marker beside the corresponding paragraph in both languages without disrupting the website's existing features.
+Version 1 succeeds when a reader can open the English and Portuguese versions of a General Conference talk side by side, scroll either one, and see the other follow with the matching paragraph aligned and marked in both tabs, without disrupting the website's existing features.
