@@ -56,6 +56,15 @@ English and Portuguese paragraphs in the same talk have the same `id` but differ
 
 The element ID is the cross-language anchor. The meaning of `data-aid` is unconfirmed, and the extension does not depend on it.
 
+**Confirmed on two talks:**
+
+* Both languages have identical ID lists, in the same order, with no extra or missing elements.
+* IDs are unchanged after reloading the page, so they are part of the content, not generated at runtime.
+* Anchors include the title (`<h1>`), section headings (`<h2>`), and paragraphs (`<p>`), all with `p_` IDs.
+* The talk container (`<article id="main">`) also has `data-aid` and must be excluded.
+
+Anchor selector: `[data-aid][id]:not(article)`
+
 ### 2. Paragraph heights differ
 
 The example paragraph is about 432px high in English and 490px in Portuguese. Raw scroll positions or pixel offsets can't be matched. The extension has to match paragraph elements.
@@ -68,7 +77,9 @@ Adding `active-item` shows the site's blue-line indicator on scripture verses an
 document.getElementById("p_atr5w").classList.add("active-item");
 ```
 
-**Open question:** How the website manages this class internally. The site is a React app and may re-render or remove the class. If it does, the extension will use its own class (e.g. `sbs-current`) styled to look the same.
+The site itself only applies `active-item` on scripture pages (for example, from verse links). It has not been observed on conference pages.
+
+**Decision:** The extension uses its own class (e.g. `sbs-current`) with a purple line, offset from the site's blue line so both can be visible on scripture pages. It draws the line with a different CSS property than `active-item` does, so the two never overwrite each other.
 
 ### 4. Study notes open in an aside
 
@@ -105,7 +116,7 @@ Only the tab the user is actually interacting with sends updates. Each content s
 
 ### Marker
 
-The current paragraph is marked in both tabs. The extension tracks the elements it has marked, so cleanup never removes the website's own state.
+The current paragraph is marked in both tabs with the extension's own purple-line class. The extension never touches `active-item`, so cleanup can't remove the website's own state.
 
 ### Single-page navigation
 
@@ -129,12 +140,12 @@ Why a bundler: Manifest V3 content scripts can't use ES module `import`s. `esbui
 
 Each phase should produce a working, testable result before moving on.
 
-### Phase 1: Validate the DOM
+### Phase 1: Validate the DOM ✅
 
-* Confirm that paragraph IDs match across several talks and both languages.
-* Confirm that the IDs stay the same after reloading the page.
-* Check which elements carry IDs: body paragraphs, headings, quotes, footnote markers.
-* Observe whether the site adds or removes `active-item` on conference pages.
+* ✅ Paragraph IDs match across two talks in both languages.
+* ✅ IDs stay the same after reloading.
+* ✅ Anchors are `h1`, `h2`, and `p` elements with `data-aid` and `id`. The `article` container is excluded.
+* ✅ The site doesn't use `active-item` on conference pages, so the extension uses its own marker class.
 
 ### Phase 2: Console proof of concept (one tab)
 
