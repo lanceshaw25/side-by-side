@@ -1,5 +1,7 @@
 // Runs on every churchofjesuschrist.org/study page. Marks the paragraph
-// crossing the reading line and tracks how far through it the reader is.
+// crossing the reading line, tracks how far through it the reader is, and
+// reports that to the background worker for the paired tab.
+import type { PositionMessage } from "./messages";
 
 // ---------- Settings ----------
 const READING_LINE_PERCENT = 30; // % down the screen; must match content.css
@@ -61,6 +63,32 @@ function fractionRead(el: Element): number {
   return Math.min(Math.max(f, 0), 1);
 }
 
+// ---------- Sending our position to the paired tab ----------
+let lastSent = "";
+
+async function reportPosition(): Promise<void> {
+  if (!current) return;
+  const message: PositionMessage = {
+    type: "position",
+    id: current.id,
+    fraction: Math.round(fractionRead(current) * 100) / 100,
+  };
+
+  // Only send when something changed (scrolling past a margin, for example,
+  // would otherwise repeat the same position many times).
+  const key = `${message.id} ${message.fraction}`;
+  if (key === lastSent) return;
+  lastSent = key;
+
+  if (DEBUG) console.log("sent", key);
+  try {
+    await chrome.runtime.sendMessage(message);
+  } catch {
+    // The extension was reloaded, so this old copy of the script can't reach
+    // it anymore. Reloading the tab fixes it.
+  }
+}
+
 let ticking = false;
 document.addEventListener(
   "scroll",
@@ -69,11 +97,18 @@ document.addEventListener(
     ticking = true;
     requestAnimationFrame(() => {
       ticking = false;
-      if (current && DEBUG) console.log(current.id, fractionRead(current).toFixed(2));
+      void reportPosition();
     });
   },
   { capture: true, passive: true },
 );
+
+// ---------- Receiving the paired tab's position ----------
+// Phase 4 only logs it. Phase 5 will scroll to it.
+chrome.runtime.onMessage.addListener((message: PositionMessage) => {
+  if (message.type !== "position") return;
+  if (DEBUG) console.log("received", message.id, message.fraction);
+});
 
 // ---------- Debug ----------
 if (DEBUG) {

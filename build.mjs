@@ -12,7 +12,7 @@ const watch = process.argv.includes("--watch");
 await cp("public", "dist", { recursive: true });
 
 const options = {
-  entryPoints: ["src/content.ts"],
+  entryPoints: ["src/content.ts", "src/background.ts"],
   bundle: true,
   outdir: "dist",
   format: "iife", // content scripts can't use import/export

@@ -163,11 +163,12 @@ Each phase should produce a working, testable result before moving on.
 
 Dev loop: `npm run watch`, then reload the extension in `chrome://extensions` and reload the tab.
 
-### Phase 4: Pairing and messaging
+### Phase 4: Pairing and messaging ✅
 
-* Pair tabs in the service worker by pathname and differing `lang`.
-* Relay messages between paired tabs, and log them on the receiving side.
-* Handle a closed tab, a tab that navigates away, and a page reload.
+* ✅ Pair tabs in `src/background.ts` by pathname and differing `lang`, looked up fresh on every message (no stored state).
+* ✅ Relay position messages (`src/messages.ts`) between paired tabs, and log them on the receiving side.
+* ✅ A third tab showing a different talk is not paired.
+* ✅ Closed tabs, navigation, and reloads need no special handling because pairs are recomputed each time.
 
 ### Phase 5: Scroll synchronization
 

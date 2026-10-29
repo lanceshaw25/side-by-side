@@ -3,6 +3,10 @@
   "name": "Side-by-Side",
   "version": "0.1.0",
   "description": "Keeps English and Portuguese General Conference talks aligned paragraph by paragraph.",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": ["https://www.churchofjesuschrist.org/*"],
   "content_scripts": [
     {
       "matches": ["https://www.churchofjesuschrist.org/study/*"],
