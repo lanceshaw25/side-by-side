@@ -1,17 +1,13 @@
-/* Purple bar beside the paragraph currently being read. */
+/* Purple bar beside the paragraph currently being read.
+   Drawn as a border image pushed outside the element (outset), so it
+   doesn't change layout or positioning. An earlier version used
+   position: relative + ::after, which shifted the site's own blue
+   active-item bar on scripture pages. */
 .sbs-current {
-  position: relative;
-}
-
-.sbs-current::after {
-  content: "";
-  position: absolute;
-  left: -20px;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  border-radius: 2px;
-  background: rebeccapurple;
+  border-image-source: linear-gradient(rebeccapurple, rebeccapurple);
+  border-image-slice: 1;
+  border-image-width: 0 0 0 4px; /* bar thickness, left side only */
+  border-image-outset: 0 0 0 20px; /* how far left of the text */
 }
 
 /* Blank space after the talk, so the last paragraphs can still scroll up to

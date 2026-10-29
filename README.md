@@ -79,7 +79,7 @@ document.getElementById("p_atr5w").classList.add("active-item");
 
 The site itself only applies `active-item` on scripture pages (for example, from verse links). It has not been observed on conference pages.
 
-**Decision:** The extension uses its own class (e.g. `sbs-current`) with a purple line, offset from the site's blue line so both can be visible on scripture pages. It draws the line with a different CSS property than `active-item` does, so the two never overwrite each other.
+**Decision:** The extension uses its own class (e.g. `sbs-current`) with a purple line, offset from the site's blue line so both can be visible on scripture pages. The bar is drawn with `border-image` and `border-image-outset`, which doesn't change layout or positioning. An earlier version used `position: relative` plus `::after`. That made the verse the reference point for the site's own absolutely positioned blue bar, which then shifted into the text.
 
 ### 4. Study notes open in an aside
 
@@ -181,6 +181,9 @@ Known limitation: dragging the scrollbar may not count as reader input, so it ma
 
 ### Phase 6: Test and refine
 
+* ✅ Study-note aside: the tab with a note open can't be scrolled by the reader (the site locks it), but it still follows the other tab. This is the intended behavior.
+* ✅ Annotations and highlights still work.
+* ✅ Scripture pages: the purple bar and the site's blue `active-item` bar both show without overlapping.
 * ✅ Touch: long drags and flicks sync. A held finger, pen, or mouse button keeps the tab leading, and a leading tab stays leading while it keeps scrolling (momentum).
 
 * Long and short paragraphs with different heights.
