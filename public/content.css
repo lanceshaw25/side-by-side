@@ -14,6 +14,14 @@
   background: rebeccapurple;
 }
 
+/* Blank space after the talk, so the last paragraphs can still scroll up to
+   the reading line (30% down) instead of the page running out first. */
+article#main::after {
+  content: "";
+  display: block;
+  height: 70vh;
+}
+
 /* Debug: magenta line at the reading position. `top` must match
    READING_LINE_PERCENT in content.ts. */
 #sbs-debug-line {

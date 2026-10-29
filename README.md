@@ -170,11 +170,14 @@ Dev loop: `npm run watch`, then reload the extension in `chrome://extensions` an
 * ✅ A third tab showing a different talk is not paired.
 * ✅ Closed tabs, navigation, and reloads need no special handling because pairs are recomputed each time.
 
-### Phase 5: Scroll synchronization
+### Phase 5: Scroll synchronization ✅
 
-* Apply proportional alignment in the paired tab.
-* Add input-based leader detection to prevent feedback loops.
-* Test scrolling in both directions.
+* ✅ Apply proportional alignment in the paired tab (`alignTo`).
+* ✅ Use input-based leader detection (wheel, keys, touch, pointer within the last 1s) to prevent feedback loops.
+* ✅ Test scrolling in both directions.
+* ✅ Add a spacer after the talk so the last paragraphs can reach the reading line.
+
+Known limitation: dragging the scrollbar may not count as reader input, so it may not sync.
 
 ### Phase 6: Test and refine
 

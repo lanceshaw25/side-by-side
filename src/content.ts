@@ -63,11 +63,29 @@ function fractionRead(el: Element): number {
   return Math.min(Math.max(f, 0), 1);
 }
 
+// ---------- Who is leading? ----------
+// The tab the reader is actually scrolling leads; the other one follows.
+// Scrolling we do from code doesn't fire these input events, so a follower
+// never mistakes a synced scroll for the reader and sends it back.
+const LEAD_WINDOW_MS = 1000; // covers smooth/momentum scrolling after the last input
+let lastInputTime = -Infinity;
+
+for (const type of ["wheel", "keydown", "touchstart", "pointerdown"]) {
+  document.addEventListener(type, () => (lastInputTime = performance.now()), {
+    capture: true,
+    passive: true,
+  });
+}
+
+function readerIsScrollingHere(): boolean {
+  return performance.now() - lastInputTime < LEAD_WINDOW_MS;
+}
+
 // ---------- Sending our position to the paired tab ----------
 let lastSent = "";
 
 async function reportPosition(): Promise<void> {
-  if (!current) return;
+  if (!current || !readerIsScrollingHere()) return;
   const message: PositionMessage = {
     type: "position",
     id: current.id,
@@ -103,11 +121,35 @@ document.addEventListener(
   { capture: true, passive: true },
 );
 
-// ---------- Receiving the paired tab's position ----------
-// Phase 4 only logs it. Phase 5 will scroll to it.
+// ---------- Following the paired tab ----------
+// The element that actually scrolls: either an inner box the site set up
+// with overflow, or the page itself.
+function scrollContainerOf(el: Element): Element {
+  for (let node = el.parentElement; node; node = node.parentElement) {
+    const { overflowY } = getComputedStyle(node);
+    if ((overflowY === "auto" || overflowY === "scroll") && node.scrollHeight > node.clientHeight) {
+      return node;
+    }
+  }
+  return document.scrollingElement ?? document.documentElement;
+}
+
+// Scroll so that `fraction` of the way through paragraph `id` sits on our
+// reading line, the same spot the reader is at in the other tab.
+function alignTo(id: string, fraction: number): void {
+  const el = document.getElementById(id);
+  if (!el) return; // no counterpart in this language
+  const rect = el.getBoundingClientRect();
+  const lineY = window.innerHeight * (READING_LINE_PERCENT / 100);
+  const pointY = rect.top + fraction * rect.height; // that spot, on screen right now
+  scrollContainerOf(el).scrollBy({ top: pointY - lineY, behavior: "instant" });
+}
+
 chrome.runtime.onMessage.addListener((message: PositionMessage) => {
   if (message.type !== "position") return;
+  if (readerIsScrollingHere()) return; // the reader is in control of this tab
   if (DEBUG) console.log("received", message.id, message.fraction);
+  alignTo(message.id, message.fraction);
 });
 
 // ---------- Debug ----------
