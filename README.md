@@ -147,11 +147,12 @@ Each phase should produce a working, testable result before moving on.
 * ✅ Anchors are `h1`, `h2`, and `p` elements with `data-aid` and `id`. The `article` container is excluded.
 * ✅ The site doesn't use `active-item` on conference pages, so the extension uses its own marker class.
 
-### Phase 2: Console proof of concept (one tab)
+### Phase 2: Console proof of concept (one tab) ✅
 
-* Detect the current paragraph with an `IntersectionObserver` reading line.
-* Log its ID and the fraction read while scrolling.
-* Mark it, and clear the previous marker.
+* ✅ Detect the current paragraph or heading with an `IntersectionObserver` reading line.
+* ✅ Log its ID and the fraction read while scrolling, throttled with `requestAnimationFrame`.
+* ✅ Mark it with a purple `::after` bar, and clear the previous marker.
+* ✅ Show a magenta debug line at the reading position.
 
 ### Phase 3: Extension skeleton
 
@@ -189,13 +190,15 @@ Each phase should produce a working, testable result before moving on.
 
 ## Learning Approach
 
-Build incrementally rather than having AI generate the entire extension.
+Build incrementally, one small testable step at a time, with AI as a guide.
 
-1. Spend 10–15 minutes attempting each task independently.
-2. Ask AI for hints rather than a complete solution.
-3. Implement the code.
-4. Request a code review.
-5. Compare the implementation with an alternative solution.
+1. Before each step, agree on what it should do and how to tell it works.
+2. AI provides complete, working code for the step, with a plain-language explanation of each part: the JavaScript/TypeScript concepts, browser APIs, and why it's written that way.
+3. Run it, observe the result, and ask about anything unclear.
+4. Experiment by changing values and pieces to see what happens.
+5. Move on only when the step works and makes sense.
+
+The goal is understanding the code, not writing every line unaided.
 
 ## Success Criteria
 
