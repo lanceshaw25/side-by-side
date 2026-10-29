@@ -67,18 +67,62 @@ function fractionRead(el: Element): number {
 // The tab the reader is actually scrolling leads; the other one follows.
 // Scrolling we do from code doesn't fire these input events, so a follower
 // never mistakes a synced scroll for the reader and sends it back.
-const LEAD_WINDOW_MS = 1000; // covers smooth/momentum scrolling after the last input
+const LEAD_WINDOW_MS = 500; // grace period after the last input or (while leading) scroll
 let lastInputTime = -Infinity;
+let touching = false; // a finger is on the screen
+let pressing = false; // a mouse button or pen is held down
 
-for (const type of ["wheel", "keydown", "touchstart", "pointerdown"]) {
-  document.addEventListener(type, () => (lastInputTime = performance.now()), {
-    capture: true,
-    passive: true,
+function markInput(): void {
+  lastInputTime = performance.now();
+}
+
+function listen<K extends keyof DocumentEventMap>(
+  type: K,
+  handler: (event: DocumentEventMap[K]) => void,
+): void {
+  document.addEventListener(type, handler, { capture: true, passive: true });
+}
+
+listen("wheel", markInput);
+listen("keydown", markInput);
+
+// A long drag fires touchstart once and nothing else until the finger lifts,
+// so treat the whole time the finger is down as input.
+listen("touchstart", () => {
+  touching = true;
+  markInput();
+});
+for (const type of ["touchend", "touchcancel"] as const) {
+  listen(type, (event) => {
+    touching = event.touches.length > 0; // other fingers may still be down
+    markInput();
   });
 }
 
+// Same idea for mouse and pen. Touch is skipped here because Chrome sends
+// pointercancel as soon as a touch starts scrolling, while the finger is
+// still down. The touch events above handle it instead.
+listen("pointerdown", (event) => {
+  if (event.pointerType === "touch") return;
+  pressing = true;
+  markInput();
+});
+for (const type of ["pointerup", "pointercancel"] as const) {
+  listen(type, (event) => {
+    if (event.pointerType === "touch") return;
+    pressing = false;
+    markInput();
+  });
+}
+
+// If the window loses focus mid-drag, the "end" event may never arrive.
+window.addEventListener("blur", () => {
+  touching = false;
+  pressing = false;
+});
+
 function readerIsScrollingHere(): boolean {
-  return performance.now() - lastInputTime < LEAD_WINDOW_MS;
+  return touching || pressing || performance.now() - lastInputTime < LEAD_WINDOW_MS;
 }
 
 // ---------- Sending our position to the paired tab ----------
@@ -111,6 +155,12 @@ let ticking = false;
 document.addEventListener(
   "scroll",
   () => {
+    // A flick keeps coasting long after the finger lifts. While we're
+    // leading, every scroll extends the lead, so we lead until the page
+    // stops moving. A follower isn't leading, so its synced scrolls never
+    // extend anything.
+    if (readerIsScrollingHere()) markInput();
+
     if (ticking) return;
     ticking = true;
     requestAnimationFrame(() => {

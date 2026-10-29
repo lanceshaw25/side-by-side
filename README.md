@@ -181,6 +181,8 @@ Known limitation: dragging the scrollbar may not count as reader input, so it ma
 
 ### Phase 6: Test and refine
 
+* ✅ Touch: long drags and flicks sync. A held finger, pen, or mouse button keeps the tab leading, and a leading tab stays leading while it keeps scrolling (momentum).
+
 * Long and short paragraphs with different heights.
 * Paragraphs with no counterpart.
 * Study-note asides open in one tab.
