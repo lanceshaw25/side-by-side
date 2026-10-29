@@ -154,11 +154,14 @@ Each phase should produce a working, testable result before moving on.
 * ✅ Mark it with a purple `::after` bar, and clear the previous marker.
 * ✅ Show a magenta debug line at the reading position.
 
-### Phase 3: Extension skeleton
+### Phase 3: Extension skeleton ✅
 
-* Set up `package.json`, `tsconfig.json`, the esbuild script, and `manifest.json`.
-* Move the Phase 2 logic into a content script.
-* Load the unpacked extension from `dist/` and confirm the marker works.
+* ✅ Set up `package.json`, `tsconfig.json`, `build.mjs` (esbuild), and `public/manifest.json`.
+* ✅ Move the Phase 2 logic into `src/content.ts`, with styles in `public/content.css`.
+* ✅ Re-scan for anchors when the page changes (`MutationObserver`).
+* ✅ Load the unpacked extension from `dist/` and confirm the marker works.
+
+Dev loop: `npm run watch`, then reload the extension in `chrome://extensions` and reload the tab.
 
 ### Phase 4: Pairing and messaging
 

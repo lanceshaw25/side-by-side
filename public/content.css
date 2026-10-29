@@ -1,0 +1,28 @@
+/* Purple bar beside the paragraph currently being read. */
+.sbs-current {
+  position: relative;
+}
+
+.sbs-current::after {
+  content: "";
+  position: absolute;
+  left: -20px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 2px;
+  background: rebeccapurple;
+}
+
+/* Debug: magenta line at the reading position. `top` must match
+   READING_LINE_PERCENT in content.ts. */
+#sbs-debug-line {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 30%;
+  height: 1px;
+  background: magenta;
+  pointer-events: none;
+  z-index: 99999;
+}

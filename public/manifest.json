@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Side-by-Side",
+  "version": "0.1.0",
+  "description": "Keeps English and Portuguese General Conference talks aligned paragraph by paragraph.",
+  "content_scripts": [
+    {
+      "matches": ["https://www.churchofjesuschrist.org/study/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}
