@@ -22,10 +22,11 @@ This is also a learning project for practicing TypeScript, DOM inspection, brows
 * A reading-position marker on the current paragraph in both tabs.
 * Only the two tabs showing the same talk are synchronized. Unrelated tabs are left alone.
 * The site's annotations, highlights, and study-note behavior are preserved.
+* Bonus: scripture chapters work too, synced verse by verse with no extra code.
 
 ### Later
 
-* Scripture pages, using verse IDs such as `p12`.
+* Navigation sync between paired tabs.
 * Additional languages available on the Church website.
 * A popup for enabling or disabling synchronization.
 
@@ -183,7 +184,11 @@ Known limitation: dragging the scrollbar may not count as reader input, so it ma
 
 * ✅ Study-note aside: the tab with a note open can't be scrolled by the reader (the site locks it), but it still follows the other tab. This is the intended behavior.
 * ✅ Annotations and highlights still work.
-* ✅ Scripture pages: the purple bar and the site's blue `active-item` bar both show without overlapping.
+* ✅ Scripture pages sync verse by verse, and the purple bar and the site's blue `active-item` bar both show without overlapping.
+* ✅ In-site navigation (no reload): after both tabs move to the same new talk or chapter, sync resumes, so the `MutationObserver` re-scan works.
+* Back/forward or navigating only one tab simply unpairs the tabs (paths differ). Syncing navigation is a future enhancement.
+
+Known quirk: the site updates the URL before the new content arrives. On a slow load, the tabs pair while one still shows the previous chapter. Scripture verse IDs (`p1`, `p2`, …) repeat in every chapter, so they briefly sync against the old chapter. Conference IDs are unique, so talks aren't affected. It resolves itself when the content finishes loading.
 * ✅ Touch: long drags and flicks sync. A held finger, pen, or mouse button keeps the tab leading, and a leading tab stays leading while it keeps scrolling (momentum).
 
 * Long and short paragraphs with different heights.
@@ -196,7 +201,7 @@ Known limitation: dragging the scrollbar may not count as reader input, so it ma
 
 ### Phase 7: Future enhancements
 
-* Scripture pages using verse IDs.
+* Navigation sync: moving to a new talk or chapter (links, back/forward) in one tab takes the paired tab there too, in its own language.
 * Additional languages.
 * An enable/disable popup.
 
