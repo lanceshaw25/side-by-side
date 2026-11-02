@@ -219,13 +219,70 @@ Planned, in a suggested order:
    * Only activate when linked. A tab without a partner shows no purple bar or magenta line and sends no scroll messages. The worker tells tabs when they become linked or unlinked (opened, closed, navigated, split, unsplit).
 3. **Settings popup** (toolbar icon, settings saved in `chrome.storage`):
    * Show or hide the magenta reading line, applied to open tabs immediately. Console logging stays a code-level `DEBUG` setting.
-   * Partner language (default `por`).
+   * Partner language. Works in both directions: an English page opens Portuguese, and a Portuguese page opens English.
    * URL matching on or off.
 4. **Open-in-split button** in the popup: swaps `lang` in the current URL for the configured language and opens it with `splitWithTabId`, linked to the current tab. Fallback: a second window positioned beside the first (works on X11, usually not on Wayland). A keyboard shortcut or right-click menu item can be added as an extra.
 
 Someday:
 
 * **iPad (Safari Web Extension).** Chrome on iPad can't run extensions, but Safari on iPad can, with nearly the same APIs (content scripts, background script, messaging), so most code would carry over. Packaging needs Xcode on a Mac, plus a developer account or a 7-day personal install. Chrome's Split View API wouldn't exist there, so pairing would rely on URL matching or explicit links. Pen input would already count as reader input (`pointerdown`).
+
+## Publishing
+
+Not started. This is the plan if other people at church become interested.
+
+### Audience
+
+The likely users are in a Portuguese-speaking ward. Most speak Portuguese first, some already know English, and some are learning it. A few English speakers are learning Portuguese. That means:
+
+* **Portuguese comes first.** The popup, store listing, and setup help need Portuguese as well as English. Chrome extensions support this with `_locales/` message files and the `chrome.i18n` API, and the store listing can be translated too.
+* **Both directions matter.** Most readers will start on a Portuguese page and open English. Nothing should assume English is the starting language.
+* **No URL editing.** Users shouldn't need to know what `lang=` is.
+* **Phones and most tablets aren't covered.** Chrome on Android (phones and tablets) and on iPhone/iPad can't run extensions. This needs a computer running Chrome, such as a Windows or Linux PC, a Mac, or a Chromebook, which may rule out many members. Say so clearly in the listing and any instructions.
+
+To check: `describe()` in `src/background.ts` treats a URL without `?lang=` as English. If the site shows a Portuguese reader Portuguese with no `lang` in the URL, that assumption is wrong, and the tab may not pair with an English tab.
+
+### Needed before publishing
+
+1. Only activate when linked. Otherwise every install shows the purple bar and blank spacer on all study pages, even for one-language reading.
+2. The open-in-split button, so no one edits a URL.
+3. The language setting.
+4. Navigation sync.
+5. Portuguese and English text for all user-facing wording.
+
+### Store requirements
+
+* Chrome Web Store developer account (one-time registration fee, about $5) and a monitored contact email.
+* 128×128 icon, which we don't have yet. Add the other icon sizes to the manifest with real files.
+* At least one screenshot at 1280×800 or 640×400. A 440×280 promo tile is recommended.
+* Short description (132 characters at most) and detailed description, in plain text.
+* Single purpose: keeps two language versions of a page aligned while you read.
+* A plain-English justification for each permission and host permission. Remove any permission that's no longer used.
+* Data-use disclosure: no data collected. If settings use `chrome.storage.sync`, disclose it, because that data goes through Google's servers. `chrome.storage.local` avoids this.
+* Privacy policy: recommended even with no data collection. A short page on GitHub Pages is enough.
+
+### Package
+
+* Build with `DEBUG = false`.
+* Zip `dist/` without the `.map` files. A small script can do this.
+* Bump `version` in `public/manifest.json` for every upload.
+* Keep `CHROMEWEBSTORE.md` as the record of listing text, permission justifications, and version history.
+* Run the skill's checklist first: `.agents/skills/chrome-extensions/references/webstore/review-checklist.md`.
+
+### Trademarks and terms
+
+The store rejects unauthorized use of others' names and logos, and the Church actively manages its trademarks.
+
+* Keep a neutral name such as "Side-by-Side." Don't use Church logos or anything that sounds official.
+* Describe the extension factually, and state that it's an unofficial project not affiliated with the Church.
+* Check whether screenshots of site content are acceptable.
+* Read the website's terms of use before publishing. This hasn't been reviewed yet.
+
+### Rollout
+
+Publish as **unlisted** first. It goes through the same review, but only people with the link can install it, and they still get automatic updates. Switch to public later if interest grows.
+
+Ongoing cost: if the site changes its page structure, the extension can break for everyone, and each fix has to pass store review.
 
 ## Learning Approach
 
