@@ -25,6 +25,7 @@ This is also a learning project for practicing TypeScript, DOM inspection, brows
 * Only the two tabs showing the same talk are synchronized. Unrelated tabs are left alone.
 * The site's annotations, highlights, and study-note behavior are preserved.
 * Bonus: scripture chapters work too, synced verse by verse with no extra code.
+* Bonus: illustrated manuals (e.g. Book of Mormon Stories) sync picture by picture as well as paragraph by paragraph.
 
 ### Later
 
@@ -64,7 +65,9 @@ The element ID is the cross-language anchor. The meaning of `data-aid` is unconf
 * Anchors include the title (`<h1>`), section headings (`<h2>`), and paragraphs (`<p>`), all with `p_` IDs.
 * The talk container (`<article id="main">`) also has `data-aid` and must be excluded.
 
-Anchor selector: `[data-aid][id]:not(article)`
+Anchor selector: `[data-aid][id]:not(article), img[id^='img']`
+
+**Images (added later):** illustrations are `<img id="img1">`, `img2`, … with no `data-aid`. On the Book of Mormon Stories "Tree of Life" page, English and Portuguese have identical anchor lists (41 anchors, 12 images, same order). Including images also improves sync on conference talks with photos, and scripture pages have none, so they're unaffected.
 
 ### 2. Paragraph heights differ
 
@@ -185,6 +188,7 @@ Known limitation: dragging the scrollbar may not count as reader input, so it ma
 * ✅ Study-note aside: the tab with a note open can't be scrolled by the reader (the site locks it), but it still follows the other tab. This is the intended behavior.
 * ✅ Annotations and highlights still work.
 * ✅ Scripture pages sync verse by verse, and the purple bar and the site's blue `active-item` bar both show without overlapping.
+* ✅ Images are anchors too. Tested on Book of Mormon Stories, scriptures, and conference talks.
 * ✅ In-site navigation (no reload): after both tabs move to the same new talk or chapter, sync resumes, so the `MutationObserver` re-scan works.
 * Back/forward or navigating only one tab simply unpairs the tabs (paths differ). Syncing navigation is a future enhancement.
 

@@ -2,7 +2,8 @@
 
 A Chrome extension for reading General Conference talks and scriptures on [churchofjesuschrist.org](https://www.churchofjesuschrist.org/study) in two languages side by side, kept aligned paragraph by paragraph.
 
-* Scroll either language and the other follows, lining up the matching paragraph, even when the translations run different lengths.
+* Scroll either language and the other follows, lining up the matching paragraph or picture, even when the translations run different lengths.
+* Works on conference talks, scriptures, and illustrated manuals such as Book of Mormon Stories, which are great for learning simple vocabulary.
 * A purple bar marks the paragraph you're reading in both languages.
 * Both pages stay normal Church website pages, so annotations, highlights, and study notes keep working.
 * Works with mouse, keyboard, trackpad, touch, and pen.

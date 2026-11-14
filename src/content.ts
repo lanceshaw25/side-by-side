@@ -5,9 +5,11 @@ import type { PositionMessage } from "./messages";
 
 // ---------- Settings ----------
 const READING_LINE_PERCENT = 30; // % down the screen; must match content.css
-const ANCHORS = "[data-aid][id]:not(article)"; // title, headings, paragraphs
+// Title, headings, and paragraphs (data-aid), plus illustrations in manuals
+// like Book of Mormon Stories (<img id="img1">, which have no data-aid).
+const ANCHORS = "[data-aid][id]:not(article), img[id^='img']";
 const MARK_CLASS = "sbs-current"; // styled in content.css
-const DEBUG = true; // show the magenta line and log positions
+const DEBUG = false; // show the magenta line and log positions
 
 // ---------- Tracking the current paragraph ----------
 let current: Element | null = null;
