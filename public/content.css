@@ -7,7 +7,9 @@
   border-image-source: linear-gradient(rebeccapurple, rebeccapurple);
   border-image-slice: 1;
   border-image-width: 0 0 0 4px; /* bar thickness, left side only */
-  border-image-outset: 0 0 0 20px; /* how far left of the text */
+  /* How far left of the text. List paragraphs are indented, so content.ts
+     sets --sbs-indent on them to keep the bar out in the margin with the rest. */
+  border-image-outset: 0 0 0 calc(20px + var(--sbs-indent, 0px));
 }
 
 /* Blank space after the talk, so the last paragraphs can still scroll up to
@@ -16,6 +18,36 @@ article#main::after {
   content: "";
   display: block;
   height: 70vh;
+}
+
+/* Paragraph numbers in conference talks, like the Gospel Library app shows.
+   Only on when content.ts adds the sbs-numbers class to <html>.
+   A CSS counter does the counting: reset once per talk body, +1 for each
+   paragraph (headings, the title block, and the notes footer don't count).
+   Both languages have the same paragraphs, so the numbers match. */
+.sbs-numbers [data-content-type="general-conference-talk"] .body-block {
+  counter-reset: sbs-paragraph;
+}
+.sbs-numbers [data-content-type="general-conference-talk"] .body-block p[data-aid] {
+  counter-increment: sbs-paragraph;
+}
+/* The number hangs in the left margin, left of the purple bar. A float with
+   a negative left margin sits outside the text without pushing it over and
+   without position: relative (which broke the site's blue bar before). */
+.sbs-numbers [data-content-type="general-conference-talk"] .body-block p[data-aid]::before {
+  content: counter(sbs-paragraph);
+  float: left;
+  width: 2em;
+  /* 28px clears the purple bar at 20px. --sbs-indent is set by content.ts
+     on list paragraphs, so their numbers line up with the others. */
+  margin-left: calc(-2em - 28px - var(--sbs-indent, 0px));
+  margin-right: calc(28px + var(--sbs-indent, 0px)); /* nets the float to zero width */
+  text-align: right;
+  font-size: 0.8em;
+  line-height: 2.1; /* roughly centers it on the first text line */
+  font-variant-numeric: tabular-nums;
+  color: #888;
+  user-select: none; /* keep it out of copied text */
 }
 
 /* Debug: magenta line at the reading position. `top` must match

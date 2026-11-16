@@ -122,6 +122,18 @@ Only the tab the user is actually interacting with sends updates. Each content s
 
 The current paragraph is marked in both tabs with the extension's own purple-line class. The extension never touches `active-item`, so cleanup can't remove the website's own state.
 
+Paragraphs inside numbered lists are indented. `measureListIndents()` in `content.ts` measures how much further right each one starts than a normal paragraph and stores that as `--sbs-indent` on the paragraph. The CSS adds it to the bar's outset (and the paragraph number's margin), so both stay in the left margin. It re-measures on load, on content changes, and on resize.
+
+### Paragraph numbers
+
+The Gospel Library mobile app numbers conference talk paragraphs, and teachers refer to those numbers in class. The website doesn't show them, so the extension adds them in the left margin, left of the purple bar.
+
+* A CSS counter does the counting: reset on each `.body-block`, plus one for every `p[data-aid]` inside it. Headings, the title and author block, and the notes footer aren't counted. Paragraphs inside numbered lists are counted, which matches the app.
+* Only on pages whose article has `data-content-type="general-conference-talk"`.
+* The number is a floated `::before` with a negative left margin, so it hangs outside the text without `position: relative` (see Discovery 3).
+* It's on while `<html>` has the `sbs-numbers` class, set from the `PARAGRAPH_NUMBERS` constant in `content.ts`. The settings popup can later toggle that class.
+* English and Portuguese have the same paragraphs, so the numbers match between languages.
+
 ### Single-page navigation
 
 The site changes pages without full reloads. The content script watches for URL changes, re-scans paragraphs, and lets the worker re-pair tabs.
@@ -194,6 +206,7 @@ Known limitation: dragging the scrollbar may not count as reader input, so it ma
 
 Known quirk: the site updates the URL before the new content arrives. On a slow load, the tabs pair while one still shows the previous chapter. Scripture verse IDs (`p1`, `p2`, …) repeat in every chapter, so they briefly sync against the old chapter. Conference IDs are unique, so talks aren't affected. It resolves itself when the content finishes loading.
 * ✅ Touch: long drags and flicks sync. A held finger, pen, or mouse button keeps the tab leading, and a leading tab stays leading while it keeps scrolling (momentum).
+* ✅ Paragraph numbers on conference talks match the Android Gospel Library app, including list items. They look right on the Surface, and list paragraphs keep their number and purple bar in the margin.
 
 * Long and short paragraphs with different heights.
 * Paragraphs with no counterpart.
@@ -223,6 +236,7 @@ Planned, in a suggested order:
    * Only activate when linked. A tab without a partner shows no purple bar or magenta line and sends no scroll messages. The worker tells tabs when they become linked or unlinked (opened, closed, navigated, split, unsplit).
 3. **Settings popup** (toolbar icon, settings saved in `chrome.storage`):
    * Show or hide the magenta reading line, applied to open tabs immediately. Console logging stays a code-level `DEBUG` setting.
+   * Paragraph numbers on or off (toggles the `sbs-numbers` class).
    * Partner language. Works in both directions: an English page opens Portuguese, and a Portuguese page opens English.
    * URL matching on or off.
 4. **Open-in-split button** in the popup: swaps `lang` in the current URL for the configured language and opens it with `splitWithTabId`, linked to the current tab. Fallback: a second window positioned beside the first (works on X11, usually not on Wayland). A keyboard shortcut or right-click menu item can be added as an extra.

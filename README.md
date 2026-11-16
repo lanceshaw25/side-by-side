@@ -5,6 +5,7 @@ A Chrome extension for reading General Conference talks and scriptures on [churc
 * Scroll either language and the other follows, lining up the matching paragraph or picture, even when the translations run different lengths.
 * Works on conference talks, scriptures, and illustrated manuals such as Book of Mormon Stories, which are great for learning simple vocabulary.
 * A purple bar marks the paragraph you're reading in both languages.
+* Conference talks show paragraph numbers in the margin, matching the Gospel Library app, so you can follow along when a teacher says "paragraph 12".
 * Both pages stay normal Church website pages, so annotations, highlights, and study notes keep working.
 * Works with mouse, keyboard, trackpad, touch, and pen.
 
@@ -61,6 +62,6 @@ Tabs are paired automatically when they show the same page in different language
 
 Source is in `src/` (TypeScript) and `public/` (manifest and CSS). Run `npm run watch` to rebuild on every save, then reload the extension and the tabs. `npm run typecheck` checks types.
 
-To show the magenta reading-line guide and console logging, set `DEBUG = true` in `src/content.ts`.
+To show the magenta reading-line guide and console logging, set `DEBUG = true` in `src/content.ts`. To hide paragraph numbers, set `PARAGRAPH_NUMBERS = false`.
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for the design, discoveries, project history, and planned enhancements.

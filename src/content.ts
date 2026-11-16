@@ -10,6 +10,29 @@ const READING_LINE_PERCENT = 30; // % down the screen; must match content.css
 const ANCHORS = "[data-aid][id]:not(article), img[id^='img']";
 const MARK_CLASS = "sbs-current"; // styled in content.css
 const DEBUG = false; // show the magenta line and log positions
+const PARAGRAPH_NUMBERS = true; // number talk paragraphs like the app (content.css)
+
+// The CSS only numbers paragraphs while this class is on <html>, so a future
+// settings popup can switch numbers on and off by toggling it.
+document.documentElement.classList.toggle("sbs-numbers", PARAGRAPH_NUMBERS);
+
+// Paragraphs inside numbered lists are indented, and the purple bar and
+// paragraph number would move in with them. Measure how much further right
+// each one starts than a normal paragraph, and hand that to the CSS as
+// --sbs-indent to pull both back out to the margin.
+function measureListIndents(): void {
+  for (const body of document.querySelectorAll(".body-block")) {
+    const normal = body.querySelector("p[data-aid]:not(li p)");
+    if (!normal) continue;
+    const normalLeft = normal.getBoundingClientRect().left;
+    for (const p of body.querySelectorAll<HTMLElement>("li p[data-aid]")) {
+      const indent = Math.round(p.getBoundingClientRect().left - normalLeft);
+      p.style.setProperty("--sbs-indent", `${indent}px`);
+    }
+  }
+}
+// The indent can change when the window (or a Split View pane) is resized.
+window.addEventListener("resize", measureListIndents);
 
 // ---------- Tracking the current paragraph ----------
 let current: Element | null = null;
@@ -52,10 +75,12 @@ new MutationObserver(() => {
   requestAnimationFrame(() => {
     scanQueued = false;
     observeAnchors();
+    measureListIndents();
   });
 }).observe(document.body, { childList: true, subtree: true });
 
 observeAnchors();
+measureListIndents();
 
 // ---------- How far through the current paragraph ----------
 function fractionRead(el: Element): number {
